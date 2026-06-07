@@ -17,23 +17,5 @@ CliniMax AI is an AI-powered physician assistant that handles the most time-cons
 
 The goal: multiply the effective output of each physician by 3–5× without adding headcount.
 
----
 
-## Run Locally
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/686ce995-ef64-44fc-8204-867a3a1aa8fc
-
-**Prerequisites:** Node.js
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key
-3. Run the app:
-   ```bash
-   npm run dev
-   ```
 
