@@ -1,0 +1,6 @@
+{
+  "name": "CliniMax",
+  "description": "An empathetic and authoritative clinical intake application with guided triage, guest check-in, and personalized intake summaries.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #00478d;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #005eb8;
+  --color-on-primary-container: #c8daff;
+  --color-secondary: #00696b;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #97f2f3;
+  --color-on-secondary-container: #007072;
+  --color-tertiary: #793100;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #9f4300;
+  --color-on-tertiary-container: #ffcfb9;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  
+  --color-background: #f9f9ff;
+  --color-on-background: #191c21;
+  --color-surface: #f9f9ff;
+  --color-on-surface: #191c21;
+  --color-on-surface-variant: #424752;
+  --color-surface-variant: #e1e2ea;
+  
+  --color-surface-container: #ecedf6;
+  --color-surface-container-low: #f2f3fb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #e7e8f0;
+  --color-surface-container-highest: #e1e2ea;
+  --color-outline: #727783;
+  --color-outline-variant: #c2c6d4;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-title: "Manrope", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* Material symbols config */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.material-symbols-outlined.fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom smooth transitions & animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.glass {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(7, 10, 20, 0.98) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98) 0%, rgba(6, 9, 18, 0.99) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.glow-accent {
+  box-shadow: 0 0 20px -5px #ff7a00;
+}
+
+.clinical-timeline-node::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -24px;
+  left: 5px;
+  width: 1px;
+  border-left: 1px dashed rgba(133, 147, 153, 0.35);
+  z-index: 0;
+}
+
+.clinical-timeline-node:last-child::after {
+  display: none;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+}
