@@ -28,7 +28,7 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
     setAiResponse(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/clinimax-ai', {
+      const response = await fetch('/api/clinimax-ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
 
   return (
     <div className="w-full min-h-screen bg-[#090d16] text-[#f8fafc] pb-16 animate-fade-in font-sans">
-
+      
       {/* Chart Back Button */}
       <button
         onClick={onBackToDashboard}
@@ -105,7 +105,7 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
               DOB: {patient.dob} • Insurance: <span className="text-[#00e0b4]">Aetna Commercial PPO</span>
             </p>
           </div>
-
+          
           <div className="flex items-center gap-3 w-full md:w-auto">
             <span className="px-4 py-2 bg-[#12192e] border border-slate-700/60 rounded-lg text-xs font-mono font-bold text-white">
               Status: <span className="text-red-400 font-extrabold">{patient.status}</span>
@@ -116,10 +116,10 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
 
       {/* Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
+        
         {/* Left Column: Health Profile & Details */}
         <div className="lg:col-span-7 flex flex-col gap-8">
-
+          
           {/* Recent Vitals Signs Box */}
           <div className="glass rounded-xl p-6 border border-slate-800">
             <h2 className="text-sm uppercase font-bold tracking-widest text-blue-200 mb-4">
@@ -236,13 +236,13 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
             <h2 className="text-xs uppercase font-bold tracking-widest text-slate-300 mb-6">
               EHR Clinical Log Timeline
             </h2>
-
+            
             <div className="relative border-l-2 border-slate-850 ml-3 space-y-6">
               {clinicalHistory.map((item, index) => (
                 <div key={index} className="relative pl-6 clinical-timeline-node">
                   {/* Circle Indicator on the line */}
                   <span className="absolute w-3 h-3 rounded-full bg-blue-500 shadow-md -left-[7px] top-1.5 z-10"></span>
-
+                  
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="text-[10px] font-mono bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-sm uppercase font-extrabold leading-none">
@@ -274,8 +274,8 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
 
             {/* Quick Chart entry addition form */}
             <form onSubmit={handleAddNote} className="mt-6 pt-5 border-t border-slate-800 flex gap-3">
-              <input
-                type="text"
+              <input 
+                type="text" 
                 name="noteText"
                 placeholder="Append quick clinical note..."
                 className="w-full text-xs rounded-lg border border-slate-700 bg-[#060812] py-2 px-3 focus:outline-none focus:border-[#FF7A00]/80 text-white placeholder-slate-500"
@@ -292,7 +292,7 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
 
         {/* Right Column: CliniMax AI Assistant Workspace */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-
+          
           <div className="glass rounded-xl p-6 border border-slate-800 relative overflow-hidden flex flex-col h-full min-h-[500px]">
             {/* Soft Ambient decorative backdrop glow */}
             <div className="absolute top-0 right-0 w-36 h-36 bg-[#FF7A00]/10 rounded-full blur-3xl pointer-events-none"></div>

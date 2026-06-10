@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PatientProfile, IntakeForm, ServiceType } from '../types';
+import { fetchConsultations, Consultation, checkBackendHealth, getBackendBaseUrl, setBackendBaseUrl } from '../lib/api';
 
 export interface DoctorPatient {
   name: string;
@@ -43,6 +44,14 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   onAddPatientToQueue
 }) => {
   const [filter, setFilter] = useState<'ALL' | 'IMMEDIATE' | 'ROUTINE' | 'PENDING'>('ALL');
+
+  // API Live synchronization states
+  const [liveConsultations, setLiveConsultations] = useState<Consultation[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [apiOnline, setApiOnline] = useState(false);
+  const [backendUrl, setBackendUrlState] = useState(getBackendBaseUrl());
+  const [showConfig, setShowConfig] = useState(false);
+  const [newUrlInput, setNewUrlInput] = useState(backendUrl);
   
   // Interactive Modals for Quick Actions
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -62,22 +71,73 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
   const triggerToast = (msg: string) => {
     setNotification(msg);
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => setNotification(null), 3500);
   };
+
+  const syncBackend = async () => {
+    setIsSyncing(true);
+    try {
+      const healthy = await checkBackendHealth();
+      setApiOnline(healthy);
+      const list = await fetchConsultations();
+      setLiveConsultations(list);
+    } catch (e) {
+      console.error("Dashboard sync failure:", e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    syncBackend();
+    const interval = setInterval(syncBackend, 15000); // Poll every 15s
+    return () => clearInterval(interval);
+  }, [backendUrl]);
+
+  // Map backend consultations to the DoctorsPatient theme format
+  const mappedLive = liveConsultations.map((c): DoctorPatient => {
+    const isUrgent = c.triage_priority === 'URGENT' || c.triage_priority === 'IMMEDIATE';
+    return {
+      name: c.patient_name,
+      dob: "Age 34 (Self-Triaged)",
+      id: c.id || `C-${Math.floor(Math.random() * 1000)}`,
+      idType: 'NEW_PATIENT',
+      status: isUrgent ? 'IMMEDIATE' : 'ROUTINE',
+      complaintTitle: "AI Consultation Intake Form",
+      complaintDesc: c.clinical_summary,
+      timeLabel: c.created_at ? new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just Now',
+      vitals: {
+        bp: "124/82 mmHg",
+        hr: "76 bpm",
+        temp: "98.6 °F",
+        spo2: "98%"
+      },
+      medications: [],
+      symptomsList: [c.raw_symptoms],
+      history: (c.chat_history || []).map(h => ({
+        type: h.role === 'user' ? 'Patient Input' : 'AI Triager Question',
+        date: 'During Triage',
+        text: h.text
+      }))
+    };
+  });
+
+  // Merge newly registered real Patients from local FastAPI with prefabricated EHR charts
+  const allPatients = [...mappedLive, ...patients.filter(p => !mappedLive.some(l => l.name === p.name))];
 
   const handleToggleTask = (id: number) => {
     setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
     triggerToast("Task status updated");
   };
 
-  const filteredPatients = patients.filter(p => {
+  const filteredPatients = allPatients.filter(p => {
     if (filter === 'ALL') return true;
     return p.status === filter;
   });
 
-  const countImmediate = patients.filter(p => p.status === 'IMMEDIATE').length;
-  const countRoutine = patients.filter(p => p.status === 'ROUTINE').length;
-  const countPending = patients.filter(p => p.status === 'PENDING').length;
+  const countImmediate = allPatients.filter(p => p.status === 'IMMEDIATE').length;
+  const countRoutine = allPatients.filter(p => p.status === 'ROUTINE').length;
+  const countPending = allPatients.filter(p => p.status === 'PENDING').length;
 
   const handleActionSubmit = (e: React.FormEvent, type: string) => {
     e.preventDefault();
@@ -153,6 +213,78 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           )}
         </div>
       </header>
+
+      {/* Live API Integration Manager */}
+      <div className="mb-6 p-4 rounded-xl bg-[#0e1324]/80 border border-slate-800/80 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-3.5 h-3.5 rounded-full ${apiOnline ? 'bg-green-500 animate-pulse' : 'bg-amber-500'} border-2 border-slate-900`}></div>
+          <div>
+            <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
+              FastAPI Supabase Synchronizer
+              <span className="px-1.5 py-0.5 bg-slate-800 rounded font-mono text-[9px] font-normal leading-none text-slate-300">
+                {apiOnline ? "ONLINE" : "SANDBOX FALLBACK"}
+              </span>
+            </h3>
+            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+              Endpoint: {backendUrl} • Polling Active (15s)
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowConfig(!showConfig)}
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 font-bold text-[11px] text-slate-200 rounded-lg flex items-center gap-1 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-xs">settings</span>
+            Configure Backend URL
+          </button>
+          <button
+            onClick={syncBackend}
+            disabled={isSyncing}
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 font-bold text-[11px] text-[#FF7A00] rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-50"
+          >
+            <span className={`material-symbols-outlined text-xs ${isSyncing ? 'animate-spin' : ''}`}>sync</span>
+            Force Sync
+          </button>
+        </div>
+      </div>
+
+      {showConfig && (
+        <div className="mb-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 animate-fade-in text-slate-100">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label className="block text-[10px] uppercase font-mono font-extrabold text-slate-400 mb-1">FastAPI Backend Endpoint Target</label>
+              <input
+                type="text"
+                value={newUrlInput}
+                onChange={e => setNewUrlInput(e.target.value)}
+                placeholder="http://127.0.0.1:8000"
+                className="w-full bg-[#070a14] border border-slate-850 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono outline-none focus:border-[#FF7A00]"
+              />
+            </div>
+            <div className="flex items-end gap-2 shrink-0">
+              <button
+                onClick={() => {
+                  setBackendBaseUrl(newUrlInput);
+                  setBackendUrlState(newUrlInput);
+                  setShowConfig(false);
+                  triggerToast("Address updated successfully!");
+                }}
+                className="px-4 py-2 bg-[#FF7A00] text-slate-950 text-xs font-black rounded-lg cursor-pointer hover:bg-amber-400 transition-all"
+              >
+                Apply Address
+              </button>
+              <button
+                onClick={() => setShowConfig(false)}
+                className="px-4 py-2 bg-slate-900 border border-slate-805 text-slate-300 text-xs font-bold rounded-lg cursor-pointer hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
