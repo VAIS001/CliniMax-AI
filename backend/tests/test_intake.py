@@ -62,3 +62,36 @@ def test_intake_chat_completion():
         # Ensure the backend successfully strips out the raw token flag before answering the client UI
         assert "CLINICAL_INTAKE_COMPLETE" not in response_data["reply"]
         assert response_data["is_complete"] is True
+
+def test_clinimax_ai_endpoint():
+    """
+    GIVEN a patient detail chart query
+    WHEN the clinician posts a query to /api/clinimax-ai
+    THEN it should return the clinical decision response
+    """
+    payload = {
+        "patientName": "Eleanor Vance",
+        "patientAge": 35,
+        "id": "PT-8829-X",
+        "symptoms": "Persistent short breath",
+        "meds": ["Lisinopril 10mg"],
+        "question": "What is the differential diagnosis?",
+        "history": "No historical events."
+    }
+
+    with patch("app.services.gemini_service.gemini_service.query_clinimax_ai") as mock_query:
+        mock_query.return_value = "Mocked Advisory Note"
+
+        response = client.post("/api/clinimax-ai", json=payload)
+
+        assert response.status_code == 200
+        assert response.json() == {"response": "Mocked Advisory Note"}
+        mock_query.assert_called_once_with(
+            patient_name="Eleanor Vance",
+            patient_age=35,
+            patient_id="PT-8829-X",
+            symptoms="Persistent short breath",
+            meds=["Lisinopril 10mg"],
+            question="What is the differential diagnosis?",
+            history="No historical events."
+        )
