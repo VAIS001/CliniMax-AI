@@ -3,7 +3,9 @@ from app.schemas.intake import (
     IntakeRequest, 
     IntakeResponse, 
     IntakeChatRequest, 
-    IntakeChatResponse
+    IntakeChatResponse,
+    CliniMaxAIRequest,
+    CliniMaxAIResponse
 )
 from app.services.gemini_service import gemini_service
 
@@ -42,3 +44,19 @@ async def intake_chat_endpoint(payload: IntakeChatRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))    
+
+@router.post("/clinimax-ai", response_model=CliniMaxAIResponse)
+async def clinimax_ai_endpoint(payload: CliniMaxAIRequest):
+    try:
+        reply = await gemini_service.query_clinimax_ai(
+            patient_name=payload.patientName,
+            patient_age=payload.patientAge,
+            patient_id=payload.id,
+            symptoms=payload.symptoms,
+            meds=payload.meds,
+            question=payload.question,
+            history=payload.history
+        )
+        return CliniMaxAIResponse(response=reply)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
