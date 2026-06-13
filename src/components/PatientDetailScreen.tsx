@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DoctorPatient } from './DoctorDashboard';
+import { API_BASE_URL } from '../config/api';
 
 interface PatientDetailScreenProps {
   patient: DoctorPatient;
@@ -28,7 +29,7 @@ export const PatientDetailScreen: React.FC<PatientDetailScreenProps> = ({
     setAiResponse(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/clinimax-ai', {
+      const response = await fetch(`${API_BASE_URL}/api/clinimax-ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
