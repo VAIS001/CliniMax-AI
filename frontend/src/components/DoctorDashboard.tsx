@@ -259,9 +259,10 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                 type="text"
                 value={newUrlInput}
                 onChange={e => setNewUrlInput(e.target.value)}
-                placeholder="http://127.0.0.1:8000"
+                placeholder="https://your-backend.onrender.com"
                 className="w-full bg-[#070a14] border border-slate-850 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono outline-none focus:border-[#FF7A00]"
               />
+              <p className="mt-1 text-[10px] text-slate-400">Use your deployed backend URL here (for example Render). Do not use 127.0.0.1 on the live site.</p>
             </div>
             <div className="flex items-end gap-2 shrink-0">
               <button
