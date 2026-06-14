@@ -1,4 +1,4 @@
-﻿-- Sync consultations schema with the backend's current data model.
+-- Sync consultations schema with the backend's current data model.
 -- This keeps prior columns for backward compatibility while adding the
 -- fields used by the FastAPI consultation write path.
 
