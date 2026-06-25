@@ -12,6 +12,7 @@ import { CompleteScreen } from './components/CompleteScreen';
 import { SummaryScreen } from './components/SummaryScreen';
 import { DoctorDashboard, DoctorPatient } from './components/DoctorDashboard';
 import { PatientDetailScreen } from './components/PatientDetailScreen';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 
 export default function App() {
   // Portal Navigation Strategy: 'patient' | 'doctor'
@@ -80,8 +81,8 @@ export default function App() {
     }
   }, [logoClicks]);
   
-  // Stepper state for Doctor Portal: 'dashboard' | 'patient_detail'
-  const [doctorView, setDoctorView] = useState<'dashboard' | 'patient_detail'>('dashboard');
+  // Stepper state for Doctor Portal: 'dashboard' | 'patient_detail' | 'analytics'
+  const [doctorView, setDoctorView] = useState<'dashboard' | 'patient_detail' | 'analytics'>('dashboard');
   const [selectedDoctorPatient, setSelectedDoctorPatient] = useState<DoctorPatient | null>(null);
 
   // Stepper state for Patient Portal: 'welcome' | 'visitor_type' | 'intake' | 'complete' | 'summary'
@@ -452,11 +453,26 @@ export default function App() {
                       setIsDrawerOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-left cursor-pointer ${
-                      portalMode === 'doctor' ? 'bg-[#FF7A00]/10 text-[#FF7A00]' : 'text-on-surface-variant hover:bg-surface-container'
+                      portalMode === 'doctor' && (doctorView === 'dashboard' || doctorView === 'patient_detail') ? 'bg-[#FF7A00]/10 text-[#FF7A00]' : 'text-slate-300 hover:bg-white/5'
                     }`}
                   >
                     <span className="material-symbols-outlined">supervisor_account</span>
                     Portal: Doctor Dashboard
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setPortalMode('doctor');
+                      setDoctorView('analytics');
+                      setSelectedDoctorPatient(null);
+                      setIsDrawerOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-left cursor-pointer ${
+                      portalMode === 'doctor' && doctorView === 'analytics' ? 'bg-[#FF7A00]/10 text-[#FF7A00]' : 'text-slate-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined">monitoring</span>
+                    Portal: Analytics Dashboard
                   </button>
 
                   <hr className="border-outline-variant/30 my-4" />
@@ -587,6 +603,10 @@ export default function App() {
                   onAddPatientToQueue={(pat) => {
                     setDoctorPatients([pat, ...doctorPatients]);
                   }}
+                />
+              ) : doctorView === 'analytics' ? (
+                <AnalyticsDashboard
+                  onBack={() => setDoctorView('dashboard')}
                 />
               ) : (
                 selectedDoctorPatient && (
