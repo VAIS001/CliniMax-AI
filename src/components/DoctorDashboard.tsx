@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PatientProfile, IntakeForm, ServiceType } from '../types';
 import { fetchConsultations, Consultation, checkBackendHealth, getBackendBaseUrl, setBackendBaseUrl } from '../lib/api';
+import { ClinicalMemoryTab } from './ClinicalMemoryTab';
+import { WhatsAppTab } from './WhatsAppTab';
+import { AudioUploadTab } from './AudioUploadTab';
 
 export interface DoctorPatient {
   name: string;
@@ -43,6 +46,16 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   onBackToPortalSelection,
   onAddPatientToQueue
 }) => {
+  const [activeTab, setActiveTab] = useState<'queue' | 'templates' | 'whatsapp' | 'audio'>('queue');
+  const [preferredStyle, setPreferredStyle] = useState<'SOAP' | 'Narrative' | 'Problem-Oriented'>('SOAP');
+
+  useEffect(() => {
+    const storedStyle = localStorage.getItem('clinimax_preferred_style');
+    if (storedStyle) {
+      setPreferredStyle(storedStyle as any);
+    }
+  }, []);
+
   const [filter, setFilter] = useState<'ALL' | 'IMMEDIATE' | 'ROUTINE' | 'PENDING'>('ALL');
 
   // API Live synchronization states
@@ -214,287 +227,358 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </div>
       </header>
 
-      {/* Live API Integration Manager */}
-      <div className="mb-6 p-4 rounded-xl bg-[#0e1324]/80 border border-slate-800/80 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-3.5 h-3.5 rounded-full ${apiOnline ? 'bg-green-500 animate-pulse' : 'bg-amber-500'} border-2 border-slate-900`}></div>
-          <div>
-            <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
-              FastAPI Supabase Synchronizer
-              <span className="px-1.5 py-0.5 bg-slate-800 rounded font-mono text-[9px] font-normal leading-none text-slate-300">
-                {apiOnline ? "ONLINE" : "SANDBOX FALLBACK"}
-              </span>
-            </h3>
-            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-              Endpoint: {backendUrl} • Polling Active (15s)
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowConfig(!showConfig)}
-            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 font-bold text-[11px] text-slate-200 rounded-lg flex items-center gap-1 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-xs">settings</span>
-            Configure Backend URL
-          </button>
-          <button
-            onClick={syncBackend}
-            disabled={isSyncing}
-            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 font-bold text-[11px] text-[#FF7A00] rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-50"
-          >
-            <span className={`material-symbols-outlined text-xs ${isSyncing ? 'animate-spin' : ''}`}>sync</span>
-            Force Sync
-          </button>
-        </div>
+      {/* Clinician Workspace Tab Navigation */}
+      <div className="flex border-b border-slate-800 mb-6 overflow-x-auto gap-2 scrollbar-none pb-1 relative z-10">
+        <button
+          onClick={() => setActiveTab('queue')}
+          className={`px-4 py-2.5 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer relative ${
+            activeTab === 'queue' ? 'text-[#FF7A00]' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span className="material-symbols-outlined text-xs font-bold">queue_play_next</span>
+          Active Patient Queue
+          {activeTab === 'queue' && (
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FF7A00]" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('templates')}
+          className={`px-4 py-2.5 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer relative ${
+            activeTab === 'templates' ? 'text-[#FF7A00]' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span className="material-symbols-outlined text-xs font-bold">clinical_notes</span>
+          Clinical Memory & Templates
+          {activeTab === 'templates' && (
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FF7A00]" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('whatsapp')}
+          className={`px-4 py-2.5 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer relative ${
+            activeTab === 'whatsapp' ? 'text-[#FF7A00]' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span className="material-symbols-outlined text-xs font-bold">chat_bubble</span>
+          WhatsApp Clinical Flow
+          {activeTab === 'whatsapp' && (
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FF7A00]" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('audio')}
+          className={`px-4 py-2.5 text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer relative ${
+            activeTab === 'audio' ? 'text-[#FF7A00]' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span className="material-symbols-outlined text-xs font-bold">audio_file</span>
+          Audio Transcription Hub
+          {activeTab === 'audio' && (
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FF7A00]" />
+          )}
+        </button>
       </div>
 
-      {showConfig && (
-        <div className="mb-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 animate-fade-in text-slate-100">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="block text-[10px] uppercase font-mono font-extrabold text-slate-400 mb-1">FastAPI Backend Endpoint Target</label>
-              <input
-                type="text"
-                value={newUrlInput}
-                onChange={e => setNewUrlInput(e.target.value)}
-                placeholder="http://127.0.0.1:8000"
-                className="w-full bg-[#070a14] border border-slate-850 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono outline-none focus:border-[#FF7A00]"
-              />
+      {activeTab === 'queue' && (
+        <>
+          {/* Live API Integration Manager */}
+          <div className="mb-6 p-4 rounded-xl bg-[#0e1324]/80 border border-slate-800/80 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-3.5 h-3.5 rounded-full ${apiOnline ? 'bg-green-500 animate-pulse' : 'bg-amber-500'} border-2 border-slate-900`}></div>
+              <div>
+                <h3 className="text-xs font-extrabold text-white flex items-center gap-2 uppercase tracking-wider">
+                  FastAPI Supabase Synchronizer
+                  <span className="px-1.5 py-0.5 bg-slate-800 rounded font-mono text-[9px] font-normal leading-none text-slate-300">
+                    {apiOnline ? "ONLINE" : "SANDBOX FALLBACK"}
+                  </span>
+                </h3>
+                <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  Endpoint: {backendUrl} • Polling Active (15s)
+                </p>
+              </div>
             </div>
-            <div className="flex items-end gap-2 shrink-0">
+            
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => {
-                  setBackendBaseUrl(newUrlInput);
-                  setBackendUrlState(newUrlInput);
-                  setShowConfig(false);
-                  triggerToast("Address updated successfully!");
-                }}
-                className="px-4 py-2 bg-[#FF7A00] text-slate-950 text-xs font-black rounded-lg cursor-pointer hover:bg-amber-400 transition-all"
+                onClick={() => setShowConfig(!showConfig)}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 font-bold text-[11px] text-slate-200 rounded-lg flex items-center gap-1 cursor-pointer"
               >
-                Apply Address
+                <span className="material-symbols-outlined text-xs">settings</span>
+                Configure Backend URL
               </button>
               <button
-                onClick={() => setShowConfig(false)}
-                className="px-4 py-2 bg-slate-900 border border-slate-805 text-slate-300 text-xs font-bold rounded-lg cursor-pointer hover:bg-slate-800"
+                onClick={syncBackend}
+                disabled={isSyncing}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 font-bold text-[11px] text-[#FF7A00] rounded-lg flex items-center gap-1 cursor-pointer disabled:opacity-50"
               >
-                Cancel
+                <span className={`material-symbols-outlined text-xs ${isSyncing ? 'animate-spin' : ''}`}>sync</span>
+                Force Sync
               </button>
             </div>
           </div>
-        </div>
+
+          {showConfig && (
+            <div className="mb-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 animate-fade-in text-slate-100">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <label className="block text-[10px] uppercase font-mono font-extrabold text-slate-400 mb-1">FastAPI Backend Endpoint Target</label>
+                  <input
+                    type="text"
+                    value={newUrlInput}
+                    onChange={e => setNewUrlInput(e.target.value)}
+                    placeholder="http://127.0.0.1:8000"
+                    className="w-full bg-[#070a14] border border-slate-850 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono outline-none focus:border-[#FF7A00]"
+                  />
+                </div>
+                <div className="flex items-end gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      setBackendBaseUrl(newUrlInput);
+                      setBackendUrlState(newUrlInput);
+                      setShowConfig(false);
+                      triggerToast("Address updated successfully!");
+                    }}
+                    className="px-4 py-2 bg-[#FF7A00] text-slate-950 text-xs font-black rounded-lg cursor-pointer hover:bg-amber-400 transition-all"
+                  >
+                    Apply Address
+                  </button>
+                  <button
+                    onClick={() => setShowConfig(false)}
+                    className="px-4 py-2 bg-slate-900 border border-slate-805 text-slate-300 text-xs font-bold rounded-lg cursor-pointer hover:bg-slate-800"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Main Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            
+            {/* Left Column: Patient Active Queue */}
+            <div className="md:col-span-8 flex flex-col gap-6">
+              <div className="flex justify-between items-center mb-1">
+                <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#FF7A00] font-normal">
+                    queue_play_next
+                  </span>
+                  Active Queue ({filteredPatients.length})
+                </h2>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+                  <span>Viewing:</span>
+                  <span className="px-2.5 py-1 bg-[#131b31] border border-slate-750 rounded text-[#FF7A00] capitalize">
+                    {filter.toLowerCase()} Triage
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {filteredPatients.length > 0 ? (
+                  filteredPatients.map((pat) => (
+                    <div
+                      key={pat.id}
+                      onClick={() => onOpenPatient(pat)}
+                      className="glass rounded-xl p-6 relative overflow-hidden group transition-all duration-300 hover:border-[#FF7A00]/50 hover:-translate-y-0.5 cursor-pointer shadow-md"
+                    >
+                      {/* Category Status Light Top Stroke */}
+                      <div
+                        className={`absolute top-0 left-0 w-full h-1 ${
+                          pat.status === 'IMMEDIATE' ? 'bg-error' : 'bg-[#a4e6ff]'
+                        }`}
+                      ></div>
+
+                      <div className="flex flex-col md:flex-row gap-6">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="text-xl font-bold font-display text-white group-hover:text-[#FF7A00] transition-colors">
+                                {pat.name}
+                              </h3>
+                              <p className="text-xs text-blue-200 font-semibold mt-0.5">
+                                DOB: {pat.dob} • MRN: <span className="font-mono text-white bg-slate-900 px-1 py-0.5 rounded">{pat.id}</span>
+                              </p>
+                            </div>
+                            <span
+                              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                pat.status === 'IMMEDIATE'
+                                  ? 'bg-error-container/20 text-[#ffb4ab] border-error/50'
+                                  : 'bg-emerald-950/45 text-[#00e0b4] border-[#00e0b4]/45'
+                              }`}
+                            >
+                              {pat.status}
+                            </span>
+                          </div>
+
+                          <div className="bg-[#0b0f1d] rounded-lg p-4 mb-4 border border-slate-800">
+                            <p className="text-xs font-extrabold text-amber-200 mb-1.5 uppercase tracking-wide">
+                              Chief Complaint: {pat.complaintTitle}
+                            </p>
+                            <p className="text-sm text-slate-100 font-medium leading-relaxed">
+                              {pat.complaintDesc}
+                            </p>
+                          </div>
+
+                          {/* Pill chips */}
+                          <div className="flex gap-2 flex-wrap">
+                            {pat.bloodType && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-100 px-2.5 py-1 bg-[#131a31] rounded border border-slate-700">
+                                <span className="material-symbols-outlined text-xs text-error fill">bloodtype</span>
+                                Type {pat.bloodType}
+                              </span>
+                            )}
+                            {pat.allergies && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#ffb4ab] px-2.5 py-1 bg-red-950/30 rounded border border-red-900/40">
+                                <span className="material-symbols-outlined text-xs">warning</span>
+                                {pat.allergies}
+                              </span>
+                            )}
+                            {pat.medications && pat.medications.length > 0 && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-100 px-2.5 py-1 bg-[#131a31] rounded border border-slate-700">
+                                <span className="material-symbols-outlined text-xs">pill</span>
+                                {pat.medications.length} Prescriptions
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action Area */}
+                        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4 border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6 min-w-[130px]">
+                          <div className="text-left md:text-right">
+                            <p className="text-[10px] uppercase font-bold text-blue-200 tracking-wider">
+                              {pat.status === 'IMMEDIATE' ? 'Wait Time' : 'Scheduled'}
+                            </p>
+                            <p
+                              className={`text-lg font-extrabold font-display ${
+                                pat.status === 'IMMEDIATE' ? 'text-red-400 animate-pulse' : 'text-slate-100'
+                              }`}
+                            >
+                              {pat.timeLabel}
+                            </p>
+                          </div>
+                          <button className="bg-[#FF7A00] text-slate-950 hover:bg-amber-400 text-xs font-black font-display px-4 py-2.5 rounded-lg transition-all shadow-md group-hover:scale-[1.03] cursor-pointer">
+                            Open Chart
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center bg-[#070a14] border border-dashed border-slate-800 rounded-xl p-8 text-slate-300 italic text-sm">
+                    No patient queues match the filtered triage type.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Sidebar Tasks & Actions */}
+            <div className="md:col-span-4 flex flex-col gap-8">
+              
+              {/* Upcoming Tasks Widget */}
+              <div className="glass rounded-xl p-6 border border-slate-850 relative">
+                <h2 className="text-lg font-bold text-white mb-6 tracking-tight flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#FF7A00]">
+                    calendar_today
+                  </span>
+                  Upcoming Tasks
+                </h2>
+                <div className="relative border-l-2 border-slate-800 ml-2.5 space-y-6">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="relative pl-6 clinical-timeline-node">
+                      {/* Indicator Dot */}
+                      <button
+                        onClick={() => handleToggleTask(task.id)}
+                        className={`absolute w-3.5 h-3.5 rounded-full -left-[8px] top-1.5 flex items-center justify-center transition-all cursor-pointer ${
+                          task.done
+                            ? 'bg-emerald-900 border border-emerald-500 text-emerald-200'
+                            : 'bg-[#090d16] border border-slate-700 hover:border-[#FF7A00]'
+                        }`}
+                      >
+                        {task.done && (
+                          <span className="material-symbols-outlined text-[8px] font-bold">check</span>
+                        )}
+                      </button>
+                      <div>
+                        <p className={`text-[10px] font-extrabold tracking-wider mb-0.5 ${task.done ? 'text-slate-500 line-through' : 'text-[#FF7A00]'}`}>
+                          {task.time}
+                        </p>
+                        <p className={`text-sm font-bold ${task.done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+                          {task.title}
+                        </p>
+                        <p className={`text-xs ${task.done ? 'text-slate-500 line-through' : 'text-slate-300'}`}>
+                          {task.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Actions Panel */}
+              <div className="glass rounded-xl p-6 border border-slate-850 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#FF7A00] to-transparent pointer-events-none"></div>
+                <h2 className="text-lg font-bold text-white mb-4 relative z-10">Quick Actions</h2>
+                <div className="grid grid-cols-2 gap-3 relative z-10">
+                  <button
+                    onClick={() => setActiveModal('note')}
+                    className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
+                  >
+                    <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
+                      edit_document
+                    </span>
+                    <span className="text-xs font-bold text-slate-100">New Note</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveModal('rx')}
+                    className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
+                  >
+                    <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
+                      prescriptions
+                    </span>
+                    <span className="text-xs font-bold text-slate-100">Rx Refill</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveModal('appt')}
+                    className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
+                  >
+                    <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
+                      calendar_add_on
+                    </span>
+                    <span className="text-xs font-bold text-slate-100">Book Appt</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveModal('ref')}
+                    className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
+                  >
+                    <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
+                      outgoing_mail
+                    </span>
+                    <span className="text-xs font-bold text-slate-100">Referral</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-        
-        {/* Left Column: Patient Active Queue */}
-        <div className="md:col-span-8 flex flex-col gap-6">
-          <div className="flex justify-between items-center mb-1">
-            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#FF7A00] font-normal">
-                queue_play_next
-              </span>
-              Active Queue ({filteredPatients.length})
-            </h2>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
-              <span>Viewing:</span>
-              <span className="px-2.5 py-1 bg-[#131b31] border border-slate-750 rounded text-[#FF7A00] capitalize">
-                {filter.toLowerCase()} Triage
-              </span>
-            </div>
-          </div>
+      {activeTab === 'templates' && (
+        <ClinicalMemoryTab onStyleChanged={(newStyle) => setPreferredStyle(newStyle)} />
+      )}
 
-          <div className="space-y-4">
-            {filteredPatients.length > 0 ? (
-              filteredPatients.map((pat) => (
-                <div
-                  key={pat.id}
-                  onClick={() => onOpenPatient(pat)}
-                  className="glass rounded-xl p-6 relative overflow-hidden group transition-all duration-300 hover:border-[#FF7A00]/50 hover:-translate-y-0.5 cursor-pointer shadow-md"
-                >
-                  {/* Category Status Light Top Stroke */}
-                  <div
-                    className={`absolute top-0 left-0 w-full h-1 ${
-                      pat.status === 'IMMEDIATE' ? 'bg-error' : 'bg-[#a4e6ff]'
-                    }`}
-                  ></div>
+      {activeTab === 'whatsapp' && (
+        <WhatsAppTab preferredStyle={preferredStyle} />
+      )}
 
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="text-xl font-bold font-display text-white group-hover:text-[#FF7A00] transition-colors">
-                            {pat.name}
-                          </h3>
-                          <p className="text-xs text-blue-200 font-semibold mt-0.5">
-                            DOB: {pat.dob} • MRN: <span className="font-mono text-white bg-slate-900 px-1 py-0.5 rounded">{pat.id}</span>
-                          </p>
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                            pat.status === 'IMMEDIATE'
-                              ? 'bg-error-container/20 text-[#ffb4ab] border-error/50'
-                              : 'bg-emerald-950/45 text-[#00e0b4] border-[#00e0b4]/45'
-                          }`}
-                        >
-                          {pat.status}
-                        </span>
-                      </div>
-
-                      <div className="bg-[#0b0f1d] rounded-lg p-4 mb-4 border border-slate-800">
-                        <p className="text-xs font-extrabold text-amber-200 mb-1.5 uppercase tracking-wide">
-                          Chief Complaint: {pat.complaintTitle}
-                        </p>
-                        <p className="text-sm text-slate-100 font-medium leading-relaxed">
-                          {pat.complaintDesc}
-                        </p>
-                      </div>
-
-                      {/* Pill chips */}
-                      <div className="flex gap-2 flex-wrap">
-                        {pat.bloodType && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-100 px-2.5 py-1 bg-[#131a31] rounded border border-slate-700">
-                            <span className="material-symbols-outlined text-xs text-error fill">bloodtype</span>
-                            Type {pat.bloodType}
-                          </span>
-                        )}
-                        {pat.allergies && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#ffb4ab] px-2.5 py-1 bg-red-950/30 rounded border border-red-900/40">
-                            <span className="material-symbols-outlined text-xs">warning</span>
-                            {pat.allergies}
-                          </span>
-                        )}
-                        {pat.medications && pat.medications.length > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-100 px-2.5 py-1 bg-[#131a31] rounded border border-slate-700">
-                            <span className="material-symbols-outlined text-xs">pill</span>
-                            {pat.medications.length} Prescriptions
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Action Area */}
-                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4 border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6 min-w-[130px]">
-                      <div className="text-left md:text-right">
-                        <p className="text-[10px] uppercase font-bold text-blue-200 tracking-wider">
-                          {pat.status === 'IMMEDIATE' ? 'Wait Time' : 'Scheduled'}
-                        </p>
-                        <p
-                          className={`text-lg font-extrabold font-display ${
-                            pat.status === 'IMMEDIATE' ? 'text-red-400 animate-pulse' : 'text-slate-100'
-                          }`}
-                        >
-                          {pat.timeLabel}
-                        </p>
-                      </div>
-                      <button className="bg-[#FF7A00] text-slate-950 hover:bg-amber-400 text-xs font-black font-display px-4 py-2.5 rounded-lg transition-all shadow-md group-hover:scale-[1.03] cursor-pointer">
-                        Open Chart
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center bg-[#070a14] border border-dashed border-slate-800 rounded-xl p-8 text-slate-300 italic text-sm">
-                No patient queues match the filtered triage type.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Sidebar Tasks & Actions */}
-        <div className="md:col-span-4 flex flex-col gap-8">
-          
-          {/* Upcoming Tasks Widget */}
-          <div className="glass rounded-xl p-6 border border-slate-850 relative">
-            <h2 className="text-lg font-bold text-white mb-6 tracking-tight flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#FF7A00]">
-                calendar_today
-              </span>
-              Upcoming Tasks
-            </h2>
-            <div className="relative border-l-2 border-slate-800 ml-2.5 space-y-6">
-              {tasks.map((task) => (
-                <div key={task.id} className="relative pl-6 clinical-timeline-node">
-                  {/* Indicator Dot */}
-                  <button
-                    onClick={() => handleToggleTask(task.id)}
-                    className={`absolute w-3.5 h-3.5 rounded-full -left-[8px] top-1.5 flex items-center justify-center transition-all cursor-pointer ${
-                      task.done
-                        ? 'bg-emerald-900 border border-emerald-500 text-emerald-200'
-                        : 'bg-[#090d16] border border-slate-700 hover:border-[#FF7A00]'
-                    }`}
-                  >
-                    {task.done && (
-                      <span className="material-symbols-outlined text-[8px] font-bold">check</span>
-                    )}
-                  </button>
-                  <div>
-                    <p className={`text-[10px] font-extrabold tracking-wider mb-0.5 ${task.done ? 'text-slate-500 line-through' : 'text-[#FF7A00]'}`}>
-                      {task.time}
-                    </p>
-                    <p className={`text-sm font-bold ${task.done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
-                      {task.title}
-                    </p>
-                    <p className={`text-xs ${task.done ? 'text-slate-500 line-through' : 'text-slate-300'}`}>
-                      {task.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick Actions Panel */}
-          <div className="glass rounded-xl p-6 border border-slate-850 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#FF7A00] to-transparent pointer-events-none"></div>
-            <h2 className="text-lg font-bold text-white mb-4 relative z-10">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3 relative z-10">
-              <button
-                onClick={() => setActiveModal('note')}
-                className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
-              >
-                <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
-                  edit_document
-                </span>
-                <span className="text-xs font-bold text-slate-100">New Note</span>
-              </button>
-              
-              <button
-                onClick={() => setActiveModal('rx')}
-                className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
-              >
-                <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
-                  prescriptions
-                </span>
-                <span className="text-xs font-bold text-slate-100">Rx Refill</span>
-              </button>
-              
-              <button
-                onClick={() => setActiveModal('appt')}
-                className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
-              >
-                <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
-                  calendar_add_on
-                </span>
-                <span className="text-xs font-bold text-slate-100">Book Appt</span>
-              </button>
-              
-              <button
-                onClick={() => setActiveModal('ref')}
-                className="bg-[#0e1324] border border-slate-800 hover:bg-[#151c36] p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:border-[#FF7A00]/50 cursor-pointer text-center group active:scale-[0.98]"
-              >
-                <span className="material-symbols-outlined text-[#FF7A00] text-3xl group-hover:scale-110 transition-transform">
-                  outgoing_mail
-                </span>
-                <span className="text-xs font-bold text-slate-100">Referral</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {activeTab === 'audio' && (
+        <AudioUploadTab preferredStyle={preferredStyle} />
+      )}
 
       {/* MODALS RENDER SECTION */}
       {activeModal && (
