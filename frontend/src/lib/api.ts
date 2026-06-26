@@ -18,23 +18,33 @@ export interface Consultation {
   created_at?: string;
 }
 
-// Store backend API configuration with fallback to recommended local FastAPI address
-const DEFAULT_BACKEND_URL = typeof window !== 'undefined' && (
-  window.location.hostname.includes('run.app') || 
-  window.location.hostname.includes('aistudio') ||
-  window.location.hostname.includes('google')
-) ? '' : 'http://127.0.0.1:8000';
+const normalizeBackendUrl = (value: string): string => value.trim().replace(/\/+$/, '');
+
+const getEnvBackendUrl = (): string => {
+  const envUrl = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL
+    ? String(import.meta.env.VITE_BACKEND_URL)
+    : '';
+  return envUrl ? normalizeBackendUrl(envUrl) : '';
+};
+
+const getStoredBackendUrl = (): string => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const storedUrl = localStorage.getItem('CLINIMAX_BACKEND_URL');
+  return storedUrl ? normalizeBackendUrl(storedUrl) : '';
+};
+
+const DEFAULT_LOCAL_BACKEND_URL = 'http://127.0.0.1:8000';
 
 export const getBackendBaseUrl = (): string => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('CLINIMAX_BACKEND_URL') || DEFAULT_BACKEND_URL;
-  }
-  return DEFAULT_BACKEND_URL;
+  return getEnvBackendUrl() || getStoredBackendUrl() || DEFAULT_LOCAL_BACKEND_URL;
 };
 
 export const setBackendBaseUrl = (url: string): void => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('CLINIMAX_BACKEND_URL', url.trim());
+    localStorage.setItem('CLINIMAX_BACKEND_URL', normalizeBackendUrl(url));
   }
 };
 

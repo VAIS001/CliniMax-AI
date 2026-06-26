@@ -21,6 +21,6 @@ app.include_router(intake.router)
 app.include_router(consultation.router) # Register your new Supabase route here
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "Welcome to CliniMax Core API API. Go to /docs for Swagger documentation."}

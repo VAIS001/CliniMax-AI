@@ -32,7 +32,12 @@ GEMINI_API_KEY=
 #### Frontend Environment File (`frontend/.env.local`)
 Create a `.env.local` file inside the `frontend/` directory with the following key:
 ```env
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+VITE_BACKEND_URL=http://127.0.0.1:8000
+```
+
+For the live deployed frontend, set this to your public backend URL instead, for example:
+```env
+VITE_BACKEND_URL=https://your-backend.onrender.com
 ```
 
 ### 3. Running the Backend Locally

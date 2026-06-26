@@ -300,7 +300,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowConfig(!showConfig)}
