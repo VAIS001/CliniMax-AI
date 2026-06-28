@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import health, intake, consultation # Add consultations import here
+from app.routes import health, intake, consultation, template, feedback, whatsapp, audio
+
 
 # ... app initialization & CORS setup stay the same ...
 
@@ -16,9 +17,13 @@ app.add_middleware(
 )
 
 # Register routers
-app.include_router(health.router)
-app.include_router(intake.router)
-app.include_router(consultation.router) # Register your new Supabase route here
+app.include_router(health.router, prefix="/health")
+app.include_router(intake.router, prefix="/intake")
+app.include_router(consultation.router, prefix="/consultation")
+app.include_router(template.router, prefix="/template")
+app.include_router(feedback.router, prefix="/feedback")
+app.include_router(whatsapp.router, prefix="/whatsapp")
+app.include_router(audio.router, prefix="/audio")
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
